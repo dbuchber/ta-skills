@@ -4,7 +4,8 @@ Claude-Skills für Heizungsregelungen von **Technische Alternative** (UVR16x2, U
 CAN-I/O45, CAN-MTx2, C.M.I.) und ihre Anbindung an Home Assistant.
 
 *Claude skills for Technische Alternative heating controllers (UVR16x2, C.M.I.) – JSON API, CoE,
-TAPPS2, menu access via the C.M.I., and analysis recipes. Written in German.*
+TAPPS2, menu access via the C.M.I., and analysis recipes. The skill itself is in English;
+this README is German.*
 
 ## Skills
 
@@ -18,11 +19,11 @@ skills/technische-alternative/
 ├── references/
 │   ├── json-api.md          C.M.I. JSON-API: Parameter, Statuscodes, Einheiten
 │   ├── coe.md               CAN over Ethernet, Home Assistant in beide Richtungen
-│   ├── cmi-menue.md         UVR-Menü über das C.M.I. lesen und ändern (beobachtetes Protokoll)
+│   ├── cmi-menu.md          UVR-Menü über das C.M.I. lesen und ändern (beobachtetes Protokoll)
 │   ├── tapps2.md            Funktionsdaten ändern, versionieren, übertragen
-│   ├── funktionen.md        Heizkreis, Anforderung, Ladepumpe, Solar, Legionellen, WMZ …
-│   ├── betrieb.md           Benutzerebenen, Uhrzeit/NTP, Logging, CAN
-│   └── auswertung.md        Speicherinhalt, Bedarfsmodell, Heizkurve, Kesselphasen, Verluste
+│   ├── functions.md         Heizkreis, Anforderung, Ladepumpe, Solar, Legionellen, WMZ …
+│   ├── operation.md         Benutzerebenen, Uhrzeit/NTP, Logging, CAN
+│   └── analysis.md          Speicherinhalt, Bedarfsmodell, Heizkurve, Kesselphasen, Verluste
 └── scripts/
     └── cmi_menu.py          Menüseiten lesen, Werte mit Prüfung und Rücklesung setzen
 ```
@@ -30,6 +31,12 @@ skills/technische-alternative/
 ## Installation
 
 Den Ordner `skills/technische-alternative` nach `~/.claude/skills/` kopieren oder verlinken.
+
+## Sprache und Quellen
+
+Der Skill ist auf Englisch geschrieben; Parameternamen stehen so, wie TA sie am Gerät zeigt
+(deutsch). Primärquelle ist das [TA-Wiki](https://wiki.ta.co.at) – der Skill verweist darauf und
+weist Claude an, Details dort nachzuschlagen; bei Widerspruch gilt das Wiki.
 
 ## Grundsätze
 

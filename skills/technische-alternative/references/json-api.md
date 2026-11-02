@@ -1,37 +1,37 @@
-# C.M.I. JSON-API
+# C.M.I. JSON API
 
-Quellen: [TA-Wiki C.M.I. JSON-API](https://wiki.ta.co.at/C.M.I._JSON-API),
-[CMI-JSON-API Version 8 (PDF, 2025-10-08)](https://www.ta.co.at/download/datei/1751/).
+Sources: [TA wiki C.M.I. JSON-API](https://wiki.ta.co.at/C.M.I._JSON-API),
+[CMI-JSON-API version 8 (PDF, 2025-10-08)](https://www.ta.co.at/download/datei/1751/).
 
-**Nur lesend.** Antwort ist immer gültiges JSON (UTF-8). Authentifizierung per HTTP-Basic als
-Benutzer der Ebene **Experte**.
+**Read only.** The response is always valid JSON (UTF-8). Authentication is HTTP Basic as a user
+with level **Experte** (expert).
 
-## Aufruf
+## Request
 
 ```
-GET http://<cmi>/INCLUDE/api.cgi?jsonnode=<knoten>&jsonparam=<liste>[&jsondesignation=1]
+GET http://<cmi>/INCLUDE/api.cgi?jsonnode=<node>&jsonparam=<list>[&jsondesignation=1]
 ```
 
-| Parameter | Bedeutung |
+| Parameter | Meaning |
 |---|---|
-| `jsonnode` | CAN-Knoten, dezimal |
-| `jsonparam` | kommagetrennt, z. B. `I,O` oder `I1,I2,O3,Sg1`; ohne Nummer alle; **max. 16 Werte je Kürzel** |
-| `jsondesignation=1` | liefert Bezeichnungen mit (ab API 8, nur x2-Geräte) |
+| `jsonnode` | CAN node, decimal |
+| `jsonparam` | comma-separated, e.g. `I,O` or `I1,I2,O3,Sg1`; without a number all values; **max. 16 values per code** |
+| `jsondesignation=1` | include designations (API 8+, x2 devices only) |
 
-| Kürzel | Inhalt | Geräte |
+| Code | Content | Devices |
 |---|---|---|
-| `I` / `O` | Eingänge / Ausgänge | UVR1611, x2 |
-| `D` | DL-Eingänge | x2 |
-| `Sg` `Sd` `St` `Ss` | Systemwerte allgemein, Datum, Zeit, Sonne | x2 |
-| `Sp` | elektrische Leistung | CAN-EZ2/EZ3 |
-| `Na` / `Nd` | Netzwerkeingänge analog/digital | **nur UVR1611** |
+| `I` / `O` | inputs / outputs | UVR1611, x2 |
+| `D` | DL inputs | x2 |
+| `Sg` `Sd` `St` `Ss` | system values general, date, time, sun | x2 |
+| `Sp` | electrical power | CAN-EZ2/EZ3 |
+| `Na` / `Nd` | network inputs analog/digital | **UVR1611 only** |
 | `M` / `AM` / `AK` | M-Bus / Modbus / KNX | BC2, UVR610 … |
-| `La` / `Ld` | Logging-Liste analog/digital | x2 |
+| `La` / `Ld` | logging list analog/digital | x2 |
 
-**CAN-Eingänge einer UVR16x2 gibt es in der API nicht.** Umweg: in die Logging-Liste aufnehmen
-und über `La`/`Ld` lesen.
+**The API does not expose CAN inputs of a UVR16x2.** Workaround: add them to the logging list and
+read `La`/`Ld`.
 
-## Antwort
+## Response
 
 ```json
 {"Header":{"Version":8,"Device":"87","Timestamp":1793000000},
@@ -39,32 +39,32 @@ und über `La`/`Ld` lesen.
  "Status":"OK","Status code":0}
 ```
 
-- `Timestamp` ist UNIX-Zeit **mit eingerechneter Zeitzone** des C.M.I., also kein reines UTC.
-- `RAS` (Raumfühler-Betriebsart) nur bei Unit 46: 0 Auto, 1 Normal, 2 Abgesenkt, 3 Standby.
+- `Timestamp` is UNIX time **with the C.M.I.'s time zone applied** – not plain UTC.
+- `RAS` (room sensor mode) only with unit 46: 0 auto, 1 normal, 2 setback, 3 standby.
 
-| Status code | Bedeutung |
+| Status code | Meaning |
 |---|---|
 | 0 | OK |
-| 1 | NODE ERROR – Knoten nicht verfügbar |
-| 2 | FAIL – CAN-Fehler oder Parameter für das Gerät nicht verfügbar |
+| 1 | NODE ERROR – node not available |
+| 2 | FAIL – CAN error or parameter not available for this device |
 | 3 | SYNTAX ERROR |
-| 4 | **TOO MANY REQUESTS – nur eine Anfrage pro Minute** |
+| 4 | **TOO MANY REQUESTS – only one request per minute** |
 | 5 | DEVICE NOT SUPPORTED |
 | 6 | TOO FEW ARGUMENTS |
 | 7 | CAN BUSY |
 
-Ob das Limit je C.M.I. oder je Knoten gilt, ist nicht eindeutig dokumentiert – je C.M.I.
-annehmen und alle Werte eines Zyklus in **eine** Anfrage packen.
+Whether the limit applies per C.M.I. or per node is not clearly documented – assume per C.M.I. and
+put all values of a cycle into **one** request.
 
-## Geräte-IDs (`Device`)
+## Device IDs (`Device`)
 
 `87` UVR16x2 · `88` RSM610 · `89` CAN-I/O45 · `8B` CAN-EZ2 · `8C` CAN-MTx2 · `8D` CAN-BC2 ·
-`8E` UVR65 · `8F` CAN-EZ3 · `91` UVR610 · `92` UVR67 · `80` UVR1611. Nicht unterstützt u. a.
-`8A` C.M.I. selbst, `7F` CoE, `A3` BL-NET.
+`8E` UVR65 · `8F` CAN-EZ3 · `91` UVR610 · `92` UVR67 · `80` UVR1611. Not supported, among others:
+`8A` the C.M.I. itself, `7F` CoE, `A3` BL-NET.
 
-## API-Version ↔ C.M.I.-Firmware
+## API version ↔ C.M.I. firmware
 
-| API | ab Firmware |
+| API | from firmware |
 |---|---|
 | 1 | 1.25.2 |
 | 4 | 1.34.2 |
@@ -72,15 +72,15 @@ annehmen und alle Werte eines Zyklus in **eine** Anfrage packen.
 | 7 | 1.42.1 |
 | 8 | 1.46.1 |
 
-## Einheiten (`Unit`)
+## Units (`Unit`)
 
 `0` – · `1` °C · `2` W/m² · `3` l/h · `4` s · `5` min · `7` K · `8` % · `10` kW · `11` kWh ·
-`12` MWh · `13` V · `14` mA · `15` h · `16` Tage · `17` Imp · `18` kΩ · `19` l · `20` km/h ·
-`21` Hz · `22` l/min · `23` bar · `28` m³ · `36` m/s · `38` m³/h · `43` Aus/Ein · `44` Nein/Ja ·
-`46` °C (RAS) · `50` € · `54` ° · `60` Uhrzeit · `63` A · `65` mbar · `67` ppm · `69` W ·
-`71` kg · `75` lx · `77` ct/kWh · `78` offen/geschlossen.
+`12` MWh · `13` V · `14` mA · `15` h · `16` days · `17` imp · `18` kΩ · `19` l · `20` km/h ·
+`21` Hz · `22` l/min · `23` bar · `28` m³ · `36` m/s · `38` m³/h · `43` off/on · `44` no/yes ·
+`46` °C (RAS) · `50` € · `54` ° · `60` time of day · `63` A · `65` mbar · `67` ppm · `69` W ·
+`71` kg · `75` lx · `77` ct/kWh · `78` open/closed.
 
-## Beispiel ohne Geheimnis in argv
+## Example without a secret in argv
 
 ```bash
 printf 'user = "%s:%s"\n' "$CMI_USER" "$CMI_PASSWORD" |

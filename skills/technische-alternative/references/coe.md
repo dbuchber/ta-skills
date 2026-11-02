@@ -1,56 +1,56 @@
 # CoE – CAN over Ethernet
 
-Quellen: [TA-Wiki CoE](https://wiki.ta.co.at/CAN_over_Ethernet_(CoE)),
-[CMI-Zusatzanleitung CoE (PDF)](https://www.ta.co.at/download/datei/826/),
-[CMI-Portfreigabe](https://wiki.ta.co.at/CMI-Portfreigabe).
+Sources: [TA wiki CoE](https://wiki.ta.co.at/CAN_over_Ethernet_(CoE)),
+[C.M.I. supplementary manual CoE (PDF)](https://www.ta.co.at/download/datei/826/),
+[C.M.I. port sharing](https://wiki.ta.co.at/CMI-Portfreigabe).
 
-## Was TA dokumentiert
+## What TA documents
 
-- CoE überträgt CAN-Netzwerkwerte (analog, digital) per **UDP** von einem C.M.I. zu einem anderen.
-- **UDP 5441 = CoE V1** (2 Byte, ±32 767), **UDP 5442 = CoE V2** (4 Byte), V2 ab C.M.I. 1.43.1.
-  Ab 1.43.1 empfängt ein C.M.I. beide, sendet standardmäßig V2. Ältere Empfänger brauchen V1.
-- Sender: C.M.I. *Einstellungen → Ausgänge → CoE*: Quelle, Ziel-IP, **virtueller Knoten**,
-  Nummer des Netzwerkausgangs.
-- Empfänger braucht eine **feste IP**. Er bekommt den virtuellen Knoten zusätzlich zur eigenen
-  Knotennummer – die Nummer darf im Empfänger-CAN nicht belegt sein.
-- Analoge Werte gehen in **Blöcken zu 4**, digitale in **2 Blöcken zu 16**. Senden zwei Quellen
-  über denselben virtuellen Knoten in denselben Block, setzen sie sich gegenseitig auf 0/AUS.
-- Kein Acknowledge: Was verloren geht, merkt niemand.
+- CoE transfers CAN network values (analog, digital) via **UDP** from one C.M.I. to another.
+- **UDP 5441 = CoE V1** (2 bytes, ±32,767), **UDP 5442 = CoE V2** (4 bytes), V2 from C.M.I. 1.43.1.
+  From 1.43.1 a C.M.I. receives both and sends V2 by default; older receivers need V1.
+- Sender: C.M.I. *Einstellungen → Ausgänge → CoE* (settings → outputs → CoE): source, target IP,
+  **virtual node**, number of the network output.
+- The receiver needs a **static IP**. It gets the virtual node in addition to its own node number –
+  that number must not be in use on the receiving CAN bus.
+- Analog values travel in **blocks of 4**, digital ones in **2 blocks of 16**. If two sources use
+  the same virtual node and block, they reset each other's values to 0/OFF.
+- No acknowledge: nobody notices a lost packet.
 
-## Home Assistant als Gegenstelle
+## Home Assistant as the counterpart
 
-Gängig ist die HACS-Integration **`ta_coe`** mit dem App „CoE to HTTP server“ (Drittanbieter,
-nicht von TA).
+Common choice: the HACS integration **`ta_coe`** with the app "CoE to HTTP server" (third party,
+not by TA).
 
-**UVR → HA:** In TAPPS2 bzw. am Regler CAN-Ausgänge anlegen, Ziel ist der virtuelle Knoten der
-Integration; am C.M.I. CoE-Ausgang mit der IP von HA. In HA erscheinen sie als
-`sensor.coe_analog_<knoten>_<nr>` / `binary_sensor.coe_digital_<knoten>_<nr>`.
+**Controller → HA:** create CAN outputs in TAPPS2 or on the controller, targeting the virtual node
+of the integration; on the C.M.I. a CoE output with Home Assistant's IP. In HA they appear as
+`sensor.coe_analog_<node>_<nr>` / `binary_sensor.coe_digital_<node>_<nr>`.
 
-- Die UVR sendet nur **bei Änderung > x**, frühestens nach **Blockierzeit**, spätestens nach
-  **Intervall** (min. 1 min). Ein Sensor, der sich selten ändert, steht in HA lange still – das
-  ist kein Ausfall. Für Auswertungen zeitgewichtet mitteln, nicht Stichproben zählen.
-- Sollwerte (Vorlaufsoll, Anforderungssoll) als eigene CAN-Ausgänge freigeben – sie sind für
-  Auswertungen wertvoller als jede Ableitung.
+- The controller sends only **on change > x**, not before the **blocking time**, at the latest
+  after the **interval** (min. 1 min). A value that rarely changes stands still in HA for a long
+  time – that is not an outage. For analysis, average time-weighted rather than counting samples.
+- Publish set-points (flow set-point, demand set-point) as CAN outputs of their own – they are
+  worth more for analysis than any derivation.
 
-**HA → UVR:** HA schickt UDP an das C.M.I., das C.M.I. stellt die Werte unter einem virtuellen
-Knoten auf den CAN-Bus, die UVR liest sie als **CAN-Eingang** (Knoten = virtueller Knoten,
-Nummer = Netzwerkausgang). Pflicht dabei:
+**HA → controller:** HA sends UDP to the C.M.I., the C.M.I. puts the values on the CAN bus under a
+virtual node, and the controller reads them as a **CAN input** (node = virtual node, number =
+network output). Mandatory:
 
-- **Timeout** (min. 5 min) und **Wert bei Timeout** setzen – sonst bleibt bei einem HA-Ausfall
-  der letzte Wert ewig stehen.
-- Nur in **Eingangsvariablen** einspeisen (z. B. *Offset Vorlaufsolltemp.*,
-  *Raumsolltemperatur*, *Externe VL.Solltemp.*); Parameter lassen sich nicht verknüpfen.
-- Plausibilität am Regler begrenzen (T.Vorlauf Max bleibt dominant).
+- Set a **timeout** (min. 5 min) and a **value on timeout** – otherwise an HA outage freezes the
+  last value forever.
+- Feed only **input variables** (e.g. *Offset Vorlaufsolltemp.*, *Raumsolltemperatur*,
+  *Externe VL.Solltemp.*); parameters cannot be linked.
+- Limit plausibility on the controller (`T.Vorlauf Max` stays dominant).
 
-## Paketformat
+## Packet format
 
-Offiziell nicht veröffentlicht. Drittquelle für V2: Rust-Crate
-[`coe`](https://docs.rs/crate/coe/0.2.1) – 4-Byte-Kopf (Version, Länge, Anzahl), bis 31
-Nutzlasten à 8 Byte (Knoten, Ausgangsindex 0-basiert, Typ, Unit-ID, Wert int32 LE). Dezimalstellen
-ergeben sich aus der Unit-ID.
+Not published by TA. Third-party source for V2: Rust crate
+[`coe`](https://docs.rs/crate/coe/0.2.1) – 4-byte header (version, length, count), up to 31
+payloads of 8 bytes (node, 0-based output index, type, unit ID, int32 LE value). Decimal places
+follow from the unit ID.
 
-## Ports des C.M.I.
+## C.M.I. ports
 
-Eingehend lokal: 80 HTTP, 502 Modbus TCP, 5441/5442 CoE. Ausgehend: 53 DNS, 80 Update-Prüfung,
-**123/UDP NTP** (Zeitquelle WEB), 40001–40003 Webportal, Mail, Online-Logging. Eingehend aus dem
-Internet wird nichts gebraucht.
+Inbound, local: 80 HTTP, 502 Modbus TCP, 5441/5442 CoE. Outbound: 53 DNS, 80 update check,
+**123/UDP NTP** (time source WEB), 40001–40003 web portal, mail, online logging. Nothing inbound
+from the internet is needed.

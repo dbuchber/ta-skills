@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Read and (carefully) change UVR16x2 menu values through the C.M.I. web interface.
 
-Observed protocol, C.M.I. firmware 1.48.1 - see references/cmi-menue.md. Python stdlib only.
+Observed protocol, C.M.I. firmware 1.48.1 - see references/cmi-menu.md. Python stdlib only.
 
 Credentials come from the environment, never from argv:
   CMI_HOST       host or IP of the C.M.I.
